@@ -1,1 +1,1 @@
-PWA that pushes a Quantum Random notification scattered every hr. 
+PWA that pushes a Quantum Random notification once every hr. 
