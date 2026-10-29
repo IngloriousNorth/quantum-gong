@@ -88,7 +88,6 @@
                 statusText.style.borderColor = "#111111"; 
                 statusText.classList.remove('locked');
             } else {
-                // RESTORED Nice Already Installed Logic
                 if (installInstructions) installInstructions.style.display = 'none';
                 statusText.innerText = "App Already Installed. Check Home Screen."; 
                 statusText.classList.add('locked'); 
@@ -131,7 +130,6 @@
                 return;
             }
         
-            // If it matches your "Nice Already Installed" fallback state but they click it anyway on Android
             if (statusText.classList.contains('locked') && !isStandalone && !isIOS) {
                 alert("This app appears to be installed already! Please look for 'Quantum Gong' on your Home Screen or App Drawer and open it there to connect.");
                 return;
@@ -174,6 +172,69 @@
                 statusText.innerText = "Connection Failed";
                 statusText.style.color = "red";
             }
+        }
+
+        // --- 5. Cyberpunk Gong Web Audio Synthesizer & SW Listener ---
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.command === "play_cyberpunk_gong") {
+                playCyberpunkGong();
+            }
+        });
+
+        function playCyberpunkGong() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = audioCtx.currentTime;
+
+            const masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0.8, now);
+            masterGain.gain.exponentialRampToValueAtTime(0.001, now + 4.0);
+
+            const distortion = audioCtx.createWaveShaper();
+            distortion.curve = makeDistortionCurve(60);
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1500, now);
+            filter.frequency.exponentialRampToValueAtTime(150, now + 3.5);
+            filter.Q.setValueAtTime(10, now);
+
+            const ratios = [1, 2.14, 3.27, 4.89, 7.12, 9.5];
+            const baseFreq = 98; // Deep G2 fundamental note
+
+            ratios.forEach((ratio, index) => {
+                const osc = audioCtx.createOscillator();
+                const oscGain = audioCtx.createGain();
+
+                osc.type = index % 2 === 0 ? 'sine' : 'sawtooth';
+                osc.frequency.setValueAtTime(baseFreq * ratio, now);
+                osc.frequency.exponentialRampToValueAtTime(baseFreq * ratio * 0.97, now + 0.15);
+
+                const decay = 4.0 / (index + 0.8);
+                oscGain.gain.setValueAtTime(1 / (index + 1), now);
+                oscGain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+
+                osc.connect(oscGain);
+                oscGain.connect(filter);
+
+                osc.start(now);
+                osc.stop(now + decay);
+            });
+
+            filter.connect(distortion);
+            distortion.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+        }
+
+        function makeDistortionCurve(amount) {
+            const k = typeof amount === 'number' ? amount : 50;
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            const deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i) {
+                const x = (i * 2) / n_samples - 1;
+                curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
         }
     </script>
 </body>
