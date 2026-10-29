@@ -12,25 +12,26 @@ self.addEventListener('push', (event) => {
     } catch (e) {}
   }
 
-  // Define notification options for both iOS and Android
+  // Define highest-priority notification options for Android / supported browsers
   const notificationOptions = {
     body: notificationBody,
     tag: 'gong-alert',
     renotify: true,
-    // Setting silent to false tells both operating systems to use 
-    // their respective system-default notification sounds.
     silent: false,
-    sound: 'default'
+    sound: 'gong.mp3',
+    requireInteraction: true,       // Keeps notification on screen until user interacts (High Priority)
+    vibrate: [300, 100, 300, 100, 500], // Aggressive vibration pattern
+    priority: 'high'                // High priority hint for supported browsers
   };
 
   const notificationPromise = self.registration.showNotification(notificationTitle, notificationOptions);
 
   // Keep this active so that if the app IS open on screen, 
-  // it still plays your custom HTML5 gong audio smoothly.
+  // it triggers your custom Web Audio API cyberpunk gong audio smoothly.
   const clientMessagePromise = self.clients.matchAll({ type: 'window', includeUncontrolled: true })
     .then((clientList) => {
       for (const client of clientList) {
-        client.postMessage({ command: "play_gong" });
+        client.postMessage({ command: "play_cyberpunk_gong" });
       }
     });
 
