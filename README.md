@@ -1,4 +1,4 @@
-PWA that pushes a Quantum Random notification ~once every 45 mins.  
+Firebase (hmph) and ServiceWorker pushes a True-Random Quantum notification ~once every 45 mins under the determinism of a 15 minute cron-job.  
 
 Everyone with the app gets the notification at the same time. 
 
