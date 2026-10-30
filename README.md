@@ -1,4 +1,4 @@
-Firebase (hmph) and ServiceWorker pushes a True-Random Quantum notification ~once every 45 mins under the determinism of a 15 minute cron-job.  
+Firebase (hmph) and ServiceWorker pushes a True-Random Quantum notification ~once every 45 mins under the determinism of a 15 minute (should be 5) cron-job.  
 
 Everyone with the app gets the notification at the same time. 
 
