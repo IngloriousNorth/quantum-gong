@@ -176,55 +176,65 @@
 
         // --- 5. Cyberpunk Gong Web Audio Synthesizer & SW Listener ---
         navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data && event.data.command === "play_cyberpunk_gong") {
-                playCyberpunkGong();
+            if (event.data && event.data.command === "play_gong") {
+                playGong();
             }
         });
 
-        function playCyberpunkGong() {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const now = audioCtx.currentTime;
-
-            const masterGain = audioCtx.createGain();
-            masterGain.gain.setValueAtTime(0.8, now);
-            masterGain.gain.exponentialRampToValueAtTime(0.001, now + 4.0);
-
-            const distortion = audioCtx.createWaveShaper();
-            distortion.curve = makeDistortionCurve(60);
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(1500, now);
-            filter.frequency.exponentialRampToValueAtTime(150, now + 3.5);
-            filter.Q.setValueAtTime(10, now);
-
-            const ratios = [1, 2.14, 3.27, 4.89, 7.12, 9.5];
-            const baseFreq = 98; // Deep G2 fundamental note
-
-            ratios.forEach((ratio, index) => {
-                const osc = audioCtx.createOscillator();
-                const oscGain = audioCtx.createGain();
-
-                osc.type = index % 2 === 0 ? 'sine' : 'sawtooth';
-                osc.frequency.setValueAtTime(baseFreq * ratio, now);
-                osc.frequency.exponentialRampToValueAtTime(baseFreq * ratio * 0.97, now + 0.15);
-
-                const decay = 4.0 / (index + 0.8);
-                oscGain.gain.setValueAtTime(1 / (index + 1), now);
-                oscGain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
-
-                osc.connect(oscGain);
-                oscGain.connect(filter);
-
-                osc.start(now);
-                osc.stop(now + decay);
-            });
-
-            filter.connect(distortion);
-            distortion.connect(masterGain);
-            masterGain.connect(audioCtx.destination);
+                /**
+         * Synthesizes a deep, resonant traditional acoustic gong using native Web Audio API.
+         */
+        function playGong() {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const now = audioCtx.currentTime;
+        
+          // Master Gain Envelope - Long decay for traditional gong resonance
+          const masterGain = audioCtx.createGain();
+          masterGain.gain.setValueAtTime(0.001, now);
+          masterGain.gain.exponentialRampToValueAtTime(0.9, now + 0.04); // Fast strike attack
+          masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 6.0); // 6-second sustain fade
+        
+          // Lowpass filter modeling the acoustic damping of heavy bronze
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(800, now);
+          filter.frequency.exponentialRampToValueAtTime(180, now + 5.0); // Tone warms as it decays
+          filter.Q.setValueAtTime(3.0, now);
+        
+          // Acoustic gong inharmonic ratios relative to fundamental frequency
+          const ratios = [1.0, 1.41, 1.73, 2.31, 2.92, 3.44];
+          const baseFreq = 75; // Deep D#2 fundamental root
+        
+          ratios.forEach((ratio, index) => {
+            const osc = audioCtx.createOscillator();
+            const oscGain = audioCtx.createGain();
+        
+            // Pure sine waves for natural acoustic resonance
+            osc.type = 'sine';
+            
+            // Pitch bending down slightly upon strike (acoustic metal stretch effect)
+            const startFreq = baseFreq * ratio;
+            osc.frequency.setValueAtTime(startFreq * 1.015, now);
+            osc.frequency.exponentialRampToValueAtTime(startFreq, now + 0.25);
+        
+            // Individual harmonic decay (higher partials fade out faster than low roots)
+            const decayTime = 6.0 / (1 + index * 0.4);
+            const initialAmp = 1 / Math.pow(index + 1, 1.2);
+            
+            oscGain.gain.setValueAtTime(0.001, now);
+            oscGain.gain.linearRampToValueAtTime(initialAmp, now + 0.03);
+            oscGain.gain.exponentialRampToValueAtTime(0.0001, now + decayTime);
+        
+            osc.connect(oscGain);
+            oscGain.connect(filter);
+        
+            osc.start(now);
+            osc.stop(now + decayTime + 0.1);
+          });
+        
+          filter.connect(masterGain);
+          masterGain.connect(audioCtx.destination);
         }
-
         function makeDistortionCurve(amount) {
             const k = typeof amount === 'number' ? amount : 50;
             const n_samples = 44100;
