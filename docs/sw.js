@@ -31,7 +31,7 @@ self.addEventListener('push', (event) => {
   const clientMessagePromise = self.clients.matchAll({ type: 'window', includeUncontrolled: true })
     .then((clientList) => {
       for (const client of clientList) {
-        client.postMessage({ command: "play_cyberpunk_gong" });
+        client.postMessage({ command: "play__gong" });
       }
     });
 
